@@ -8,7 +8,8 @@
 // LIBXML2 :  3
 // RAPIDXML:  4
 // PUGIXML :  5
-#define XML_LIBRARY  4
+// libroxml:  6
+#define XML_LIBRARY  1
 
 static void print_offset(unsigned int offset)
 {
@@ -74,7 +75,7 @@ static int print_xml_node(TiXmlDocument* doc, TiXmlNode* cur, unsigned int offse
 		printf("Node: %s, bad type\n", cur->Value());
 		break;
 	}
-	if (cur->Type() != TiXmlNode::NodeType::TINYXML_ELEMENT) {
+	if (cur->Type() == TiXmlNode::NodeType::TINYXML_ELEMENT) {
 		propertyNode = cur->ToElement()->FirstAttribute();
 		while (propertyNode)
 		{
