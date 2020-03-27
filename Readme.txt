@@ -1,0 +1,4 @@
+ 分别使用tinyxml、tinyxml2、libxml2、rapidxml、pugixml读取xml文件并打印输出
+
+工程使用VS2019，相关tinyxml依赖库使用vcpkg解决，编译前vcpkg编译链接好。
+同时vcpkg 使用vcpkg integrate install进vs2019
