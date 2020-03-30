@@ -9,7 +9,7 @@
 // RAPIDXML:  4
 // PUGIXML :  5
 // libroxml:  6
-#define XML_LIBRARY  1
+#define XML_LIBRARY  6
 
 static void print_offset(unsigned int offset)
 {
@@ -480,6 +480,86 @@ static int parse_xml_file(const char* file_name)
 		fprintf(stderr, "iter node fail.\n");
 		goto FAILED;
 	}
+
+	return 0;
+FAILED:
+	return -1;
+}
+#endif
+
+// 使用libroxml
+#if XML_LIBRARY == 6
+
+#include "roxml.h"
+
+bool _has_valid_code(const char* strBuff)
+{
+	const char* str = strBuff;
+	while (*str != '\0')
+	{
+		if ((*str == '\x0d') || (*str == '\x0a') || (*str == ' ')) {
+			str++;
+		}
+		else {
+			return true;
+		}
+	}
+	return false;
+}
+
+//解析每一个phone，提取出name、tel、address
+static int print_xml_node(node_t* xml, unsigned int offset)
+{
+	node_t* propertyNode;
+
+	// 获取当前结点的所有属性结点，并依次打印
+	print_offset(offset);
+	char* name = roxml_get_name(xml, NULL, 1);
+	char* value = roxml_get_content(xml, NULL, 1, NULL);
+	printf("Node: %s, value: %s, type: %d\n", name, value, roxml_get_type(xml));
+	roxml_release(value);
+	roxml_release(name);
+	propertyNode = roxml_get_attr(xml, NULL, 0);
+	while (propertyNode)
+	{
+		print_offset(offset + 4);
+		name = roxml_get_name(propertyNode, NULL, 1);
+		value = roxml_get_content(propertyNode, NULL, 1, NULL);
+		printf("%s=[%s]\n", name, value);
+		roxml_release(value);
+		roxml_release(name);
+		propertyNode = roxml_get_next_sibling(propertyNode);
+	}
+	// 递归输出所有子结点
+	node_t* childNode = roxml_get_chld(xml, NULL, 0);
+	while (childNode != NULL) {
+		print_xml_node(childNode, offset + 2);
+		childNode = roxml_get_next_sibling(childNode);
+	}
+	return 0;
+}
+
+static int parse_xml_file(const char* file_name)
+{
+	if (NULL == file_name) {
+		return -1;
+	}
+
+	//获取树形结构
+	node_t* root = roxml_load_doc((char*)file_name);
+	if (!root) {
+		fprintf(stderr, "Failed to parse xml file:%s\n", file_name);
+		goto FAILED;
+	}
+
+	// 依次打印每一个结点
+	if (print_xml_node(root, 0)) {
+		fprintf(stderr, "iter node fail.\n");
+		roxml_close(root);
+		goto FAILED;
+	}
+
+	roxml_close(root);
 
 	return 0;
 FAILED:
