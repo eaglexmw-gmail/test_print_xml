@@ -492,6 +492,12 @@ FAILED:
 
 #include "roxml.h"
 
+#ifdef DEBUG
+#pragma comment(lib, "roxml_debug.lib ")
+#else
+#pragma comment(lib, "roxml_release.lib ")
+#endif // DEBUG
+
 bool _has_valid_code(const char* strBuff)
 {
 	const char* str = strBuff;
@@ -517,18 +523,16 @@ static int print_xml_node(node_t* xml, unsigned int offset)
 	char* name = roxml_get_name(xml, NULL, 1);
 	char* value = roxml_get_content(xml, NULL, 1, NULL);
 	printf("Node: %s, value: %s, type: %d\n", name, value, roxml_get_type(xml));
-	roxml_release(value);
-	roxml_release(name);
-	propertyNode = roxml_get_attr(xml, NULL, 0);
-	while (propertyNode)
+	int attr_index = 0;
+	int attr_number = roxml_get_attr_nb(xml);
+	while (attr_index < attr_number)
 	{
+		propertyNode = roxml_get_attr(xml, NULL, attr_index);
 		print_offset(offset + 4);
 		name = roxml_get_name(propertyNode, NULL, 1);
 		value = roxml_get_content(propertyNode, NULL, 1, NULL);
 		printf("%s=[%s]\n", name, value);
-		roxml_release(value);
-		roxml_release(name);
-		propertyNode = roxml_get_next_sibling(propertyNode);
+		attr_index++;
 	}
 	// 递归输出所有子结点
 	node_t* childNode = roxml_get_chld(xml, NULL, 0);
@@ -555,10 +559,12 @@ static int parse_xml_file(const char* file_name)
 	// 依次打印每一个结点
 	if (print_xml_node(root, 0)) {
 		fprintf(stderr, "iter node fail.\n");
+		roxml_release(RELEASE_ALL);
 		roxml_close(root);
 		goto FAILED;
 	}
 
+	roxml_release(RELEASE_ALL);
 	roxml_close(root);
 
 	return 0;
